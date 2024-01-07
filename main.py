@@ -10,14 +10,12 @@ def read_lev(lev_up, bc_list):
             read_lev(lev_key, bc_list)
         return bc_list
     elif type(lev_up) == dict:
-        for lev_key, lev_value in lev_up.items():
-            if 'ChildBarcodes' in lev_up:
-                read_lev(lev_up['ChildBarcodes'], bc_list)
-            elif 'Barcodes' in lev_up:
-                read_lev(lev_up['Barcodes'], bc_list)
-            elif 'Barcode' in lev_up:
-                bc_list.append(lev_up['Barcode'])
-                break
+        if 'ChildBarcodes' in lev_up:
+            read_lev(lev_up['ChildBarcodes'], bc_list)
+        elif 'Barcodes' in lev_up:
+            read_lev(lev_up['Barcodes'], bc_list)
+        elif 'Barcode' in lev_up:
+            bc_list.append(lev_up['Barcode'])
         return bc_list
 
 
