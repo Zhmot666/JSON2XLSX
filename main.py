@@ -50,9 +50,9 @@ if __name__ == "__main__":
         read_lev(lev1, barcode_list, level_dic)
 
     workbook = xlsxwriter.Workbook(file_path.replace('json', 'xlsx'))
+    counter = 1
     worksheet = workbook.add_worksheet()
     for barcode in barcode_list:
-        counter = 1
         for i in range(int(num_level) + 1):
             worksheet.write(chr(65+i) + str(counter), barcode['lv'+str(i)])
         counter += 1
