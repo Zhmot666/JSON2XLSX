@@ -40,7 +40,7 @@ class Ui_MainWindow(object):
         self.items_lv_0.setGeometry(QtCore.QRect(220, 100, 49, 16))
         self.items_lv_0.setObjectName("items_lv_0")
         self.items_lv_1 = QtWidgets.QLabel(parent=self.groupBox)
-        self.items_lv_1.setGeometry(QtCore.QRect(220, 120, 49, 16))
+        self.items_lv_1.setGeometry(QtCore.QRect(220, 120, 200, 16))
         self.items_lv_1.setObjectName("items_lv_1")
         self.items_lv_2 = QtWidgets.QLabel(parent=self.groupBox)
         self.items_lv_2.setGeometry(QtCore.QRect(220, 140, 49, 16))
