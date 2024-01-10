@@ -1,6 +1,0 @@
-.gitignor
-*.xlsx
-*.json
-.idea/
-.venv/
-__pycache__/
