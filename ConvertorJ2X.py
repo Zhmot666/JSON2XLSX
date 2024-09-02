@@ -26,23 +26,24 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         file_name = self.groupBox.findChild(QLabel, 'SelectedFile')
         file_name.setText(dlg[0])
         count_lv0, count_lv1, count_lv2 = 0, 0, 0
-        with open(dlg[0], encoding='utf-8') as read_file:
-            for line in read_file:
-                if 'level' in line:
-                    self.num_level = (line.replace('"level": ', '')).strip()
-                    match int(self.num_level):
-                        case 0:
-                            count_lv0 += 1
-                        case 1:
-                            count_lv1 += 1
-                        case 2:
-                            count_lv2 += 1
-                    if 'lv' + self.num_level not in self.level_dic:
-                        self.level_dic['lv' + self.num_level] = ''
-            self.groupBox.findChild(QLabel, 'items_lv_0').setText(str(count_lv0))
-            self.groupBox.findChild(QLabel, 'items_lv_1').setText(str(count_lv1) + ' по ' + str(count_lv0/count_lv1) +
-                                                                  ' шт в коробке')
-            self.groupBox.findChild(QLabel, 'items_lv_2').setText(str(count_lv2))
+        if dlg[0] != '':
+            with open(dlg[0], encoding='utf-8') as read_file:
+                for line in read_file:
+                    if 'level' in line:
+                        self.num_level = (line.replace('"level": ', '')).strip()
+                        match int(self.num_level):
+                            case 0:
+                                count_lv0 += 1
+                            case 1:
+                                count_lv1 += 1
+                            case 2:
+                                count_lv2 += 1
+                        if 'lv' + self.num_level not in self.level_dic:
+                            self.level_dic['lv' + self.num_level] = ''
+                self.groupBox.findChild(QLabel, 'items_lv_0').setText(str(count_lv0))
+                self.groupBox.findChild(QLabel, 'items_lv_1').setText(str(count_lv1) + ' по ' + str(count_lv0/count_lv1) +
+                                                                      ' шт в коробке')
+                self.groupBox.findChild(QLabel, 'items_lv_2').setText(str(count_lv2))
 
     def write_bc(self, lev_dic, level, wr_barcode):
         lev_dic['lv' + str(level)] = wr_barcode
@@ -69,6 +70,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
 
     def convert_file(self):
         workbook, worksheet = '', ''
+        self.barcode_list = list()
         file_path = self.groupBox.findChild(QLabel, 'SelectedFile').text()
         separator_num = 0 if self.max_items_lv0.text().strip() == '' else int(self.max_items_lv0.text())
         with open(file_path, encoding='utf-8') as read_file:
