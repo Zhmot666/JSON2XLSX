@@ -1,0 +1,6 @@
+# Python 3.10+ (в коде используется match/case).
+# Установка: pip install -r requirements.txt
+
+xlsxwriter==3.2.9
+PyQt6==6.11.0
+jsonschema==4.23.0

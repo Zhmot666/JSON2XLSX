@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'E:/PyProjects/JSON2XLSX/design.ui'
+# Form implementation generated from reading ui file 'e:\PyProjects\JSON2XLSX\design.ui'
 #
 # Created by: PyQt6 UI code generator 6.11.0
 #

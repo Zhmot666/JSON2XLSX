@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Otchet agregatsii",
+  "type": "object",
+  "properties": {
+    "productGroup": {
+      "type": "string"
+    },
+    "aggregationUnits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sntins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unitSerialNumber": {
+            "type": "string"
+          },
+          "aggregationUnitCapacity": {
+            "type": "integer"
+          },
+          "aggregationType": {
+            "type": "string",
+            "enum": ["AGGREGATION"]
+          },
+          "aggregatedItemsCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sntins",
+          "unitSerialNumber",
+          "aggregationUnitCapacity",
+          "aggregationType",
+          "aggregatedItemsCount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "participantId": {
+      "type": "string"
+    }
+  },
+  "required": ["productGroup", "aggregationUnits", "participantId"],
+  "additionalProperties": false
+}
