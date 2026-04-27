@@ -8,17 +8,31 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import re
 import sys
 from pathlib import Path
 from typing import Any
 
-SCHEMA_PATH = Path(__file__).resolve().parent / "schemas" / "aggregation_report.schema.json"
+
+def _app_dir() -> Path:
+    """Корень приложения: исходники, onefile (_MEIPASS), onedir (_internal или рядом с .exe)."""
+    if not getattr(sys, "frozen", False):
+        return Path(__file__).resolve().parent
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        return Path(meipass)
+    exe_dir = Path(sys.executable).resolve().parent
+    internal = exe_dir / "_internal"
+    if internal.is_dir() and (internal / "schemas").is_dir():
+        return internal
+    return exe_dir
+
+
+SCHEMA_PATH = _app_dir() / "schemas" / "aggregation_report.schema.json"
 
 # Значение productGroup по умолчанию, если на форме / в CLI не задано.
-PRODUCT_GROUP_DEFAULT = "dietary_supplements"
+PRODUCT_GROUP_DEFAULT = "bio"
 
 _GS = "\x1d"
 # Полный штрихкод в JSON: 01 + GTIN(14) + 21 + serial(13) + GS + криптохвост (91/92…)
@@ -43,6 +57,12 @@ def barcode_to_gtin_serial_compact(barcode: str) -> str:
 
 def _is_level0_leaf(d: Any) -> bool:
     return isinstance(d, dict) and d.get("level") == 0 and "Barcode" in d
+
+
+def normalize_unit_serial_number(value: Any) -> str:
+    """Для unitSerialNumber удаляем ровно два лидирующих нуля (если есть)."""
+    s = str(value)
+    return s[2:] if s.startswith("00") else s
 
 
 def iter_level1_boxes(task_root: dict):
@@ -75,7 +95,7 @@ def boxes_to_aggregation_units(task_mark: dict) -> list[dict[str, Any]]:
         units.append(
             {
                 "sntins": sntins,
-                "unitSerialNumber": str(box.get("Barcode", "")),
+                "unitSerialNumber": normalize_unit_serial_number(box.get("Barcode", "")),
                 "aggregationUnitCapacity": n,
                 "aggregationType": "AGGREGATION",
                 "aggregatedItemsCount": n,
@@ -177,9 +197,8 @@ def process_file(
     out_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     lines = collect_level0_barcodes_ordered(data)
     with out_csv.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
         for code in lines:
-            writer.writerow([code])
+            f.write(f"{code}\n")
     return out_json, out_csv
 
 

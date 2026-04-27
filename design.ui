@@ -189,10 +189,10 @@
          </size>
         </property>
         <property name="text">
-         <string>dietary_supplements</string>
+         <string>bio</string>
         </property>
         <property name="placeholderText">
-         <string>dietary_supplements</string>
+         <string>bio</string>
         </property>
         <property name="sizePolicy" stdset="0">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">

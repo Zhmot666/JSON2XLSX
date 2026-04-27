@@ -122,6 +122,9 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.setStyleSheet(_APP_STYLESHEET)
         self.setWindowTitle('JSON → XLSX')
+        default_pg = taskmarks_aggregation.PRODUCT_GROUP_DEFAULT
+        self.productGroupInput.setText(default_pg)
+        self.productGroupInput.setPlaceholderText(default_pg)
         self.SelectFile.clicked.connect(self.press_select)
         self.ConvertFile.clicked.connect(self.convert_file)
         self.ExportAggregation.clicked.connect(self.export_aggregation_report)

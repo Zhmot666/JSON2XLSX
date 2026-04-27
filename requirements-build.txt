@@ -1,0 +1,3 @@
+# Сборка .exe (Windows). После установки: pyinstaller JSON2XLSX.spec
+-r requirements.txt
+pyinstaller==6.15.0

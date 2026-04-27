@@ -1,0 +1,39 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build artifacts
+build/
+dist/
+*.spec.bak
+
+# PyInstaller cache/log artifacts
+*.toc
+*.pkg
+*.pyz
+warn-*.txt
+xref-*.html
+
+# Local generated outputs
+*_agg_report.json
+*_lv0.csv
+*_big.xlsx
+*.xlsx
+
+# Tooling / test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
