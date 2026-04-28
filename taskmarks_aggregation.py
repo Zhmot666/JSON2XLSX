@@ -2,7 +2,7 @@
 Преобразование JSON с TaskMarks в отчёт агрегации по JSON Schema
 и выгрузка всех Barcode с level 0 в CSV (один полный код на строку).
 
-В JSON отчёта поле sntins — компактный формат GTIN(14)+Serial(13) без криптохвоста;
+В JSON отчёта поле sntins — формат 01+GTIN(14)+21+Serial(13) без криптохвоста;
 в CSV — исходные полные штрихкоды из поля Barcode.
 """
 from __future__ import annotations
@@ -39,9 +39,9 @@ _GS = "\x1d"
 _SNTIN_HEAD = re.compile(r"^01(\d{14})21(.{13})")
 
 
-def barcode_to_gtin_serial_compact(barcode: str) -> str:
+def barcode_to_sntin(barcode: str) -> str:
     """
-    Код для поля sntins: 14 цифр GTIN + 13 символов серии (без криптохвоста после GS).
+    Код для поля sntins: 01 + GTIN(14) + 21 + Serial(13), без криптохвоста после GS.
     """
     if not isinstance(barcode, str):
         barcode = str(barcode)
@@ -52,7 +52,7 @@ def barcode_to_gtin_serial_compact(barcode: str) -> str:
             "Ожидается префикс GS1 01+14 цифр GTIN+21+13 символов серии до первого GS; "
             f"фрагмент: {head[:48]!r}…"
         )
-    return m.group(1) + m.group(2)
+    return f"01{m.group(1)}21{m.group(2)}"
 
 
 def _is_level0_leaf(d: Any) -> bool:
@@ -90,7 +90,7 @@ def iter_level1_boxes(task_root: dict):
 def boxes_to_aggregation_units(task_mark: dict) -> list[dict[str, Any]]:
     units: list[dict[str, Any]] = []
     for box in iter_level1_boxes(task_mark):
-        sntins = [barcode_to_gtin_serial_compact(str(c["Barcode"])) for c in box["ChildBarcodes"]]
+        sntins = [barcode_to_sntin(str(c["Barcode"])) for c in box["ChildBarcodes"]]
         n = len(sntins)
         units.append(
             {
