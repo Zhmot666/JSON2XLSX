@@ -12,8 +12,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(560, 520)
-        MainWindow.setMinimumSize(QtCore.QSize(480, 460))
+        MainWindow.resize(720, 520)
+        MainWindow.setMinimumSize(QtCore.QSize(640, 460))
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_central = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -143,6 +143,10 @@ class Ui_MainWindow(object):
         self.horizontalLayout_actions = QtWidgets.QHBoxLayout()
         self.horizontalLayout_actions.setSpacing(12)
         self.horizontalLayout_actions.setObjectName("horizontalLayout_actions")
+        self.ExportSeparateCsv = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.ExportSeparateCsv.setMinimumSize(QtCore.QSize(0, 42))
+        self.ExportSeparateCsv.setObjectName("ExportSeparateCsv")
+        self.horizontalLayout_actions.addWidget(self.ExportSeparateCsv)
         self.ExportAggregation = QtWidgets.QPushButton(parent=self.centralwidget)
         self.ExportAggregation.setMinimumSize(QtCore.QSize(0, 42))
         self.ExportAggregation.setObjectName("ExportAggregation")
@@ -180,5 +184,6 @@ class Ui_MainWindow(object):
         self.participantIdInput.setPlaceholderText(_translate("MainWindow", "Обязательно для отчёта агрегации"))
         self.label_5.setText(_translate("MainWindow", "Разбить выгрузку: не больше строк (level 0) в одном .xlsx"))
         self.max_items_lv0.setPlaceholderText(_translate("MainWindow", "Пусто = без лимита"))
+        self.ExportSeparateCsv.setText(_translate("MainWindow", "Раздельные TXT"))
         self.ExportAggregation.setText(_translate("MainWindow", "Отчёт агрегации + CSV (ур. 0)"))
         self.ConvertFile.setText(_translate("MainWindow", "Конвертировать в XLSX"))

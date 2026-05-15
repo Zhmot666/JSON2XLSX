@@ -37,6 +37,7 @@ PRODUCT_GROUP_DEFAULT = "bio"
 _GS = "\x1d"
 # Полный штрихкод в JSON: 01 + GTIN(14) + 21 + serial(13) + GS + криптохвост (91/92…)
 _SNTIN_HEAD = re.compile(r"^01(\d{14})21(.{13})")
+_WIN_FILENAME_BAD = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 def barcode_to_sntin(barcode: str) -> str:
@@ -174,6 +175,62 @@ def export_paths(json_path: Path) -> tuple[Path, Path]:
     parent = json_path.parent
     stem = json_path.stem
     return parent / f"{stem}_agg_report.json", parent / f"{stem}_lv0.csv"
+
+
+def barcode_to_txt_filename(barcode: str) -> str:
+    """Имя TXT-файла по штрихкоду коробки (безопасно для Windows)."""
+    s = _WIN_FILENAME_BAD.sub("_", str(barcode).strip())
+    s = s.rstrip(". ")
+    if not s:
+        s = "unnamed"
+    if len(s) > 200:
+        s = s[:200]
+    return f"{s}.txt"
+
+
+def _unique_txt_path(out_dir: Path, barcode: str, used: dict[str, int]) -> Path:
+    name = barcode_to_txt_filename(barcode)
+    stem = name[:-4]
+    n = used.get(stem, 0) + 1
+    used[stem] = n
+    if n > 1:
+        return out_dir / f"{stem}_{n}.txt"
+    return out_dir / name
+
+
+def export_separate_level0_csv(
+    input_path: Path,
+    output_dir: Path | None = None,
+) -> list[Path]:
+    """
+    Для каждой коробки (уровень 1) — отдельный TXT с полными кодами уровня 0.
+    Имя файла — штрихкод коробки (уровень 1).
+    """
+    data = json.loads(input_path.read_text(encoding="utf-8"))
+    out_dir = output_dir if output_dir is not None else input_path.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    used_names: dict[str, int] = {}
+    tasks = data.get("TaskMarks")
+    if not isinstance(tasks, list) or not tasks:
+        raise ValueError("В JSON отсутствует непустой массив TaskMarks.")
+    for tm in tasks:
+        if not isinstance(tm, dict):
+            continue
+        for box in iter_level1_boxes(tm):
+            codes = [str(c["Barcode"]) for c in box["ChildBarcodes"]]
+            box_bc = str(box.get("Barcode", ""))
+            path = _unique_txt_path(out_dir, box_bc, used_names)
+            with path.open("w", encoding="utf-8", newline="") as f:
+                for code in codes:
+                    f.write(f"{code}\n")
+            written.append(path)
+    if not written:
+        raise ValueError(
+            "Не найдено агрегационных единиц уровня 1 с кодами уровня 0 "
+            "(ожидается структура ChildBarcodes → коробки → изделия)."
+        )
+    return written
 
 
 def process_file(

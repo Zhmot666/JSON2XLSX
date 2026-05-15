@@ -105,6 +105,22 @@ QPushButton#ExportAggregation:hover {
 QPushButton#ExportAggregation:pressed {
     background: #dbeafe;
 }
+QPushButton#ExportSeparateCsv {
+    background: #ffffff;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton#ExportSeparateCsv:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+QPushButton#ExportSeparateCsv:pressed {
+    background: #dbeafe;
+}
 QStatusBar {
     background: #f1f5f9;
     border-top: 1px solid #e2e8f0;
@@ -128,6 +144,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.SelectFile.clicked.connect(self.press_select)
         self.ConvertFile.clicked.connect(self.convert_file)
         self.ExportAggregation.clicked.connect(self.export_aggregation_report)
+        self.ExportSeparateCsv.clicked.connect(self.export_separate_csv)
 
     def press_select(self):
         dlg = QFileDialog.getOpenFileName(self, 'Выберите файл', '', 'JSON-файлы (*.json)')
@@ -217,6 +234,24 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             counter_lines += 1
         workbook.close()
         QMessageBox.information(self, 'Готово', 'Конвертация завершена.')
+
+    def export_separate_csv(self):
+        file_path = self.SelectedFile.text()
+        if not file_path or file_path == 'Файл не выбран':
+            QMessageBox.warning(self, 'Нет файла', 'Сначала выберите JSON-файл.')
+            return
+        p = Path(file_path)
+        try:
+            paths = taskmarks_aggregation.export_separate_level0_csv(p)
+        except Exception as exc:
+            QMessageBox.critical(self, 'Ошибка экспорта', str(exc))
+            return
+        folder = paths[0].parent
+        QMessageBox.information(
+            self,
+            'Готово',
+            f'Создано файлов: {len(paths)}\nКаталог: {folder}',
+        )
 
     def export_aggregation_report(self):
         file_path = self.SelectedFile.text()

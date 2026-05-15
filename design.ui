@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
+    <width>720</width>
     <height>520</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>480</width>
+    <width>640</width>
     <height>460</height>
    </size>
   </property>
@@ -309,6 +309,19 @@
       <property name="spacing">
        <number>12</number>
       </property>
+      <item>
+       <widget class="QPushButton" name="ExportSeparateCsv">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>42</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Раздельные TXT</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="ExportAggregation">
         <property name="minimumSize">
