@@ -60,6 +60,18 @@ pyinstaller JSON2XLSX.spec
 
 Повторная сборка после правок кода: снова `pyinstaller JSON2XLSX.spec`. Первый запуск после сборки может быть чуть дольше из‑за распаковки; антивирус иногда дольше проверяет большие onefile-EXE.
 
+## Иконка приложения
+
+Иконка окна и `JSON2XLSX.exe` задаётся файлом **`assets/app_icon.ico`** (исходник — `assets/app_icon.png`). После замены PNG пересоберите ICO, например:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from pathlib import Path; from PIL import Image; img=Image.open('assets/app_icon.png').convert('RGBA'); img.save('assets/app_icon.ico', format='ICO', sizes=[(s,s) for s in (16,24,32,48,64,128,256)])"
+```
+
+Затем пересоберите EXE (`pyinstaller JSON2XLSX.spec --clean`).
+
+**Иконка в Проводнике не обновилась?** Windows кэширует значки по пути к файлу. После пересборки откройте `dist\JSON2XLSX_new.exe` (копия с новым именем) или переименуйте exe; при необходимости обновите кэш: закройте все окна Проводника и выполните `ie4uinit.exe -show`, либо перезагрузите ПК.
+
 ## Редактирование формы
 
 Разметка окна задаётся в **`design.ui`** (Qt Designer). После правок пересоберите модуль интерфейса:

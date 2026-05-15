@@ -10,6 +10,23 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 import design
 import taskmarks_aggregation
 
+
+def _app_base_dir() -> Path:
+    if getattr(sys, 'frozen', False):
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            return Path(meipass)
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+def _app_icon() -> QtGui.QIcon:
+    icon_path = _app_base_dir() / 'assets' / 'app_icon.ico'
+    if icon_path.is_file():
+        return QtGui.QIcon(str(icon_path))
+    return QtGui.QIcon()
+
+
 _APP_STYLESHEET = """
 QMainWindow {
     background: #eef1f6;
@@ -138,6 +155,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.setStyleSheet(_APP_STYLESHEET)
         self.setWindowTitle('JSON → XLSX')
+        self.setWindowIcon(_app_icon())
         default_pg = taskmarks_aggregation.PRODUCT_GROUP_DEFAULT
         self.productGroupInput.setText(default_pg)
         self.productGroupInput.setPlaceholderText(default_pg)
@@ -298,6 +316,9 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
     app.setFont(MainApp._default_font())
+    icon = _app_icon()
+    if not icon.isNull():
+        app.setWindowIcon(icon)
     window = MainApp()
     window.show()
     app.exec()
