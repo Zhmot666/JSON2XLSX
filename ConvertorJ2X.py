@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 import design
 import taskmarks_aggregation
+import taskmarks_disaggregation
 
 
 def _app_base_dir() -> Path:
@@ -106,7 +107,8 @@ QPushButton#ConvertFile:hover {
 QPushButton#ConvertFile:pressed {
     background: #1e40af;
 }
-QPushButton#ExportAggregation {
+QPushButton#ExportAggregation,
+QPushButton#ExportDisaggregation {
     background: #ffffff;
     color: #1d4ed8;
     border: 1px solid #93c5fd;
@@ -115,11 +117,13 @@ QPushButton#ExportAggregation {
     font-weight: 600;
     font-size: 13px;
 }
-QPushButton#ExportAggregation:hover {
+QPushButton#ExportAggregation:hover,
+QPushButton#ExportDisaggregation:hover {
     background: #eff6ff;
     border-color: #3b82f6;
 }
-QPushButton#ExportAggregation:pressed {
+QPushButton#ExportAggregation:pressed,
+QPushButton#ExportDisaggregation:pressed {
     background: #dbeafe;
 }
 QPushButton#ExportSeparateCsv {
@@ -162,6 +166,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.SelectFile.clicked.connect(self.press_select)
         self.ConvertFile.clicked.connect(self.convert_file)
         self.ExportAggregation.clicked.connect(self.export_aggregation_report)
+        self.ExportDisaggregation.clicked.connect(self.export_disaggregation_xml)
         self.ExportSeparateCsv.clicked.connect(self.export_separate_csv)
 
     def press_select(self):
@@ -269,6 +274,30 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self,
             'Готово',
             f'Создано файлов: {len(paths)}\nКаталог: {folder}',
+        )
+
+    def export_disaggregation_xml(self):
+        file_path = self.SelectedFile.text()
+        if not file_path or file_path == 'Файл не выбран':
+            QMessageBox.warning(self, 'Нет файла', 'Сначала выберите JSON-файл.')
+            return
+        inn = self.participantIdInput.text().strip()
+        if not inn:
+            QMessageBox.warning(
+                self,
+                'Нет ИНН',
+                'Заполните поле «Участник (participantId)» — для XML нужен ИНН (trade_participant_inn).',
+            )
+            return
+        try:
+            out_xml = taskmarks_disaggregation.process_file(Path(file_path), inn)
+        except Exception as exc:
+            QMessageBox.critical(self, 'Ошибка экспорта', str(exc))
+            return
+        QMessageBox.information(
+            self,
+            'Готово',
+            f'Создан файл:\n{out_xml}',
         )
 
     def export_aggregation_report(self):

@@ -231,7 +231,7 @@
          </size>
         </property>
         <property name="placeholderText">
-         <string>Обязательно для отчёта агрегации</string>
+         <string>participantId / ИНН (агрегация и разагрегация)</string>
         </property>
         <property name="sizePolicy" stdset="0">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -319,6 +319,19 @@
         </property>
         <property name="text">
          <string>Раздельные TXT</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="ExportDisaggregation">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>42</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Разагрегация</string>
         </property>
        </widget>
       </item>

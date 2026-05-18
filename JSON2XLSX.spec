@@ -14,7 +14,7 @@ a = Analysis(
         (str(spec_dir / "schemas"), "schemas"),
         (str(spec_dir / "assets"), "assets"),
     ],
-    hiddenimports=["design", "taskmarks_aggregation"],
+    hiddenimports=["design", "taskmarks_aggregation", "taskmarks_disaggregation"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

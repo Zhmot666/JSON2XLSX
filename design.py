@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'E:/PyProjects/JSON2XLSX/design.ui'
+# Form implementation generated from reading ui file 'e:\ProjectPy\JSON2XLSX\design.ui'
 #
 # Created by: PyQt6 UI code generator 6.11.0
 #
@@ -147,6 +147,10 @@ class Ui_MainWindow(object):
         self.ExportSeparateCsv.setMinimumSize(QtCore.QSize(0, 42))
         self.ExportSeparateCsv.setObjectName("ExportSeparateCsv")
         self.horizontalLayout_actions.addWidget(self.ExportSeparateCsv)
+        self.ExportDisaggregation = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.ExportDisaggregation.setMinimumSize(QtCore.QSize(0, 42))
+        self.ExportDisaggregation.setObjectName("ExportDisaggregation")
+        self.horizontalLayout_actions.addWidget(self.ExportDisaggregation)
         self.ExportAggregation = QtWidgets.QPushButton(parent=self.centralwidget)
         self.ExportAggregation.setMinimumSize(QtCore.QSize(0, 42))
         self.ExportAggregation.setObjectName("ExportAggregation")
@@ -181,9 +185,10 @@ class Ui_MainWindow(object):
         self.productGroupInput.setText(_translate("MainWindow", "bio"))
         self.productGroupInput.setPlaceholderText(_translate("MainWindow", "bio"))
         self.label_participant_id.setText(_translate("MainWindow", "Участник (participantId)"))
-        self.participantIdInput.setPlaceholderText(_translate("MainWindow", "Обязательно для отчёта агрегации"))
+        self.participantIdInput.setPlaceholderText(_translate("MainWindow", "participantId / ИНН (агрегация и разагрегация)"))
         self.label_5.setText(_translate("MainWindow", "Разбить выгрузку: не больше строк (level 0) в одном .xlsx"))
         self.max_items_lv0.setPlaceholderText(_translate("MainWindow", "Пусто = без лимита"))
         self.ExportSeparateCsv.setText(_translate("MainWindow", "Раздельные TXT"))
+        self.ExportDisaggregation.setText(_translate("MainWindow", "Разагрегация"))
         self.ExportAggregation.setText(_translate("MainWindow", "Отчёт агрегации + CSV (ур. 0)"))
         self.ConvertFile.setText(_translate("MainWindow", "Конвертировать в XLSX"))

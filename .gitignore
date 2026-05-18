@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 
 # Virtual environments
 .venv/
@@ -9,31 +10,40 @@ venv/
 env/
 ENV/
 
-# Build artifacts
+# PyInstaller / сборка
 build/
 dist/
 *.spec.bak
+*.manifest
 
-# PyInstaller cache/log artifacts
+# Артефакты анализа PyInstaller (если попали в корень)
 *.toc
 *.pkg
 *.pyz
 warn-*.txt
 xref-*.html
 
-# Local generated outputs
+# Локальные результаты работы приложения
 *_agg_report.json
 *_lv0.csv
+*_disaggregation.xml
 *_big.xlsx
 *.xlsx
+
+# Устаревший дубликат UI (используется design.py из design.ui)
+design_ui.py
 
 # Tooling / test caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
-# IDE and OS files
+# IDE, агенты, ОС
 .idea/
 .vscode/
+.cursor/
 .DS_Store
 Thumbs.db
+desktop.ini
