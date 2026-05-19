@@ -1,7 +1,7 @@
 """
 TaskMarks JSON → документ расформирования упаковки (DISAGGREGATION_DOCUMENT_XML).
 
-Коды КИТУ берутся из узлов уровня 1 (коробки), как unitSerialNumber в отчёте агрегации.
+Коды КИТУ берутся из узлов уровня 1 (коробки) без изменения Barcode из JSON.
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import json
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from taskmarks_aggregation import iter_level1_boxes, normalize_unit_serial_number
+from taskmarks_aggregation import iter_level1_boxes
 
 DISAGGREGATION_ACTION_ID = "31"
 DISAGGREGATION_VERSION = "2"
@@ -29,7 +29,7 @@ def collect_kitu_codes(data: dict) -> list[str]:
             bc = box.get("Barcode", "")
             if not bc:
                 raise ValueError("У коробки уровня 1 отсутствует Barcode.")
-            codes.append(normalize_unit_serial_number(bc))
+            codes.append(str(bc))
     if not codes:
         raise ValueError(
             "Не найдено коробок уровня 1 с кодами уровня 0 "

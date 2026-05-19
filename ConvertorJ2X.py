@@ -316,7 +316,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         try:
             pg = self.productGroupInput.text().strip() or None
-            out_json, out_csv = taskmarks_aggregation.process_file(
+            out_json, out_csv, out_xml = taskmarks_aggregation.process_file(
                 p,
                 taskmarks_aggregation.SCHEMA_PATH,
                 validate=True,
@@ -329,7 +329,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         QMessageBox.information(
             self,
             'Готово',
-            f'Созданы файлы:\n{out_json}\n{out_csv}',
+            f'Созданы файлы:\n{out_json}\n{out_xml}\n{out_csv}',
         )
 
     @staticmethod

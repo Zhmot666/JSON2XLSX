@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -171,10 +172,52 @@ def validate_report(instance: dict[str, Any], schema_path: Path) -> None:
     jsonschema.validate(instance=instance, schema=schema)
 
 
-def export_paths(json_path: Path) -> tuple[Path, Path]:
+def build_unit_pack_xml(data: dict[str, Any], participant_id: str) -> ET.Element:
+    """XML агрегации (unit_pack): pack_code — Barcode коробки из JSON без изменений."""
+    root = ET.Element("unit_pack")
+    document = ET.SubElement(root, "Document")
+    organisation = ET.SubElement(document, "organisation")
+    id_info = ET.SubElement(organisation, "id_info")
+    inn = str(participant_id).strip()
+    ET.SubElement(id_info, "LP_info", {"LP_TIN": inn})
+    tasks = data.get("TaskMarks")
+    if not isinstance(tasks, list) or not tasks:
+        raise ValueError("В JSON отсутствует непустой массив TaskMarks.")
+    found = False
+    for tm in tasks:
+        if not isinstance(tm, dict):
+            continue
+        for box in iter_level1_boxes(tm):
+            found = True
+            bc = box.get("Barcode", "")
+            if not bc:
+                raise ValueError("У коробки уровня 1 отсутствует Barcode.")
+            pack_content = ET.SubElement(document, "pack_content")
+            ET.SubElement(pack_content, "pack_code").text = str(bc)
+            for child in box["ChildBarcodes"]:
+                ET.SubElement(pack_content, "cis").text = barcode_to_sntin(str(child["Barcode"]))
+    if not found:
+        raise ValueError(
+            "Не найдено агрегационных единиц уровня 1 с кодами уровня 0 "
+            "(ожидается структура ChildBarcodes → коробки → изделия)."
+        )
+    return root
+
+
+def unit_pack_xml_bytes(data: dict[str, Any], participant_id: str) -> bytes:
+    root = build_unit_pack_xml(data, participant_id)
+    ET.indent(root, space="    ")
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+
+def export_paths(json_path: Path) -> tuple[Path, Path, Path]:
     parent = json_path.parent
     stem = json_path.stem
-    return parent / f"{stem}_agg_report.json", parent / f"{stem}_lv0.csv"
+    return (
+        parent / f"{stem}_agg_report.json",
+        parent / f"{stem}_lv0.csv",
+        parent / f"{stem}_unit_pack.xml",
+    )
 
 
 def barcode_to_txt_filename(barcode: str) -> str:
@@ -240,7 +283,7 @@ def process_file(
     validate: bool = True,
     product_group: str | None = None,
     participant_id: str | None = None,
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     data = json.loads(input_path.read_text(encoding="utf-8"))
     report = build_aggregation_report(
         data,
@@ -250,18 +293,22 @@ def process_file(
     sch = schema_path if schema_path is not None else SCHEMA_PATH
     if validate and sch.is_file():
         validate_report(report, sch)
-    out_json, out_csv = export_paths(input_path)
+    out_json, out_csv, out_xml = export_paths(input_path)
     out_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_xml.write_bytes(unit_pack_xml_bytes(data, report["participantId"]))
     lines = collect_level0_barcodes_ordered(data)
     with out_csv.open("w", encoding="utf-8", newline="") as f:
         for code in lines:
             f.write(f"{code}\n")
-    return out_json, out_csv
+    return out_json, out_csv, out_xml
 
 
 def _main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
-        description="TaskMarks JSON → отчёт агрегации (_agg_report.json) + CSV кодов уровня 0 (_lv0.csv)."
+        description=(
+            "TaskMarks JSON → отчёт агрегации (_agg_report.json), "
+            "XML unit_pack (_unit_pack.xml) и CSV кодов уровня 0 (_lv0.csv)."
+        )
     )
     p.add_argument("input_json", type=Path, help="Входной JSON с TaskMarks")
     p.add_argument(
@@ -293,7 +340,7 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"Файл не найден: {inp}", file=sys.stderr)
         return 1
     try:
-        out_j, out_c = process_file(
+        out_j, out_c, out_x = process_file(
             inp,
             args.schema,
             validate=not args.no_validate,
@@ -304,6 +351,7 @@ def _main(argv: list[str] | None = None) -> int:
         print(str(e), file=sys.stderr)
         return 1
     print(f"JSON: {out_j}")
+    print(f"XML:  {out_x}")
     print(f"CSV:  {out_c}")
     return 0
 

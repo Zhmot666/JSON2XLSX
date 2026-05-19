@@ -23,12 +23,14 @@ dist/
 warn-*.txt
 xref-*.html
 
-# Локальные результаты работы приложения
+# Локальные результаты работы приложения (рядом с исходным JSON)
 *_agg_report.json
+*_unit_pack.xml
 *_lv0.csv
 *_disaggregation.xml
 *_big.xlsx
 *.xlsx
+# Раздельные TXT: имя файла = штрихкод коробки (произвольное), не игнорируются по маске
 
 # Устаревший дубликат UI (используется design.py из design.ui)
 design_ui.py

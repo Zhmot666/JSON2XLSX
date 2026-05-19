@@ -1,6 +1,6 @@
 # JSON2XLSX
 
-Утилита с графическим интерфейсом на **PyQt6**: конвертация JSON с маркировкой (`TaskMarks`) в Excel, формирование **отчёта агрегации** по JSON Schema, выгрузка кодов уровня 0 в CSV и XML **расформирования упаковки** (Честный ЗНАК, `DISAGGREGATION_DOCUMENT_XML`).
+Утилита с графическим интерфейсом на **PyQt6**: конвертация JSON с маркировкой (`TaskMarks`) в Excel, **отчёт агрегации** (JSON Schema + XML `unit_pack`), CSV кодов уровня 0, раздельные TXT по коробкам и XML **расформирования упаковки** (Честный ЗНАК).
 
 ## Требования
 
@@ -31,18 +31,27 @@ python ConvertorJ2X.py
 | **Конвертировать в XLSX** | Таблица уровней маркировки; при лимите строк — несколько `.xlsx` и общий `*_big.xlsx` | Лимит строк (необязательно) |
 | **Раздельные TXT** | По одному `.txt` на коробку (уровень 1): полные штрихкоды изделий (уровень 0), имя файла — штрихкод коробки | Не нужны |
 | **Разагрегация** | `*_disaggregation.xml` — расформирование упаковки (КИТУ, уровень 1) | **ИНН** в поле участника |
-| **Отчёт агрегации + CSV (ур. 0)** | `*_agg_report.json` и `*_lv0.csv` | **productGroup** (по умолчанию `bio`), **participantId** |
+| **Отчёт агрегации + CSV (ур. 0)** | `*_agg_report.json`, `*_unit_pack.xml` и `*_lv0.csv` | **productGroup** (по умолчанию `bio`), **participantId** |
 
-В отчёте агрегации поле `sntins` — формат **01 + GTIN (14) + 21 + серия (13)** без криптохвоста; в CSV — **полные** штрихкоды из JSON.
+В JSON-отчёте поле `sntins` — формат **01 + GTIN (14) + 21 + серия (13)** без криптохвоста; в CSV — **полные** штрихкоды из JSON. В JSON-отчёте `unitSerialNumber` (КИТУ) формируется **без двух ведущих нулей** (`00…` → `…`); в `*_unit_pack.xml` и при разагрегации используется **исходный** `Barcode` коробки из JSON.
 
-Проверка отчёта агрегации — по **`schemas/aggregation_report.schema.json`** (папку `schemas` не удаляйте, если нужна валидация).
+Проверка JSON-отчёта — по **`schemas/aggregation_report.schema.json`** (папку `schemas` не удаляйте, если нужна валидация).
+
+### Агрегация (XML unit_pack)
+
+Файл `*_unit_pack.xml` — документ формирования упаковки для загрузки в ГИС МТ:
+
+- `organisation` / `id_info` / `LP_info@LP_TIN` — ИНН из **participantId**;
+- для каждой коробки (уровень 1) — блок `pack_content`: `pack_code` = `Barcode` коробки из JSON (без изменений), дочерние `cis` = коды изделий (01+GTIN+21+серия без криптохвоста).
+
+Пример: `задание_unit_pack.xml` рядом с исходным JSON.
 
 ### Разагрегация (XML)
 
 Формат соответствует документу **«Расформирование упаковки»** (`action_id="31"`, `version="2"`):
 
 - `trade_participant_inn` — ИНН из поля «Участник»;
-- `packings_list` / `packing` / `kitu` — коды коробок уровня 1 (КИТУ), с той же нормализацией, что `unitSerialNumber` в агрегации (снятие двух ведущих нулей при наличии).
+- `packings_list` / `packing` / `kitu` — коды коробок уровня 1 (КИТУ) как в JSON (`Barcode` без изменений).
 
 Пример имени файла: `задание_disaggregation.xml` рядом с исходным JSON.
 
@@ -54,12 +63,14 @@ python ConvertorJ2X.py
 python taskmarks_aggregation.py путь\к\файлу.json --participant-id "ваш_идентификатор"
 ```
 
+Создаёт рядом с JSON: `*_agg_report.json`, `*_unit_pack.xml`, `*_lv0.csv`.
+
 | Аргумент | Описание |
 |----------|----------|
 | `--product-group STR` | `productGroup` (по умолчанию — `bio`) |
-| `--participant-id STR` | `participantId` в корне JSON |
+| `--participant-id STR` | `participantId` в JSON и `LP_TIN` в XML |
 | `--schema ПУТЬ` | JSON Schema (по умолчанию — `schemas/aggregation_report.schema.json`) |
-| `--no-validate` | Не проверять по схеме |
+| `--no-validate` | Не проверять JSON по схеме |
 
 ### Разагрегация (XML)
 
@@ -113,4 +124,4 @@ pyuic6 design.ui -o design.py
 
 ## Что не коммитить
 
-Сгенерированные рядом с JSON файлы (`*_agg_report.json`, `*_lv0.csv`, `*_disaggregation.xml`, `*.xlsx`, раздельные TXT), каталоги `build/`, `dist/`, виртуальное окружение — перечислены в **`.gitignore`**.
+Сгенерированные рядом с JSON: `*_agg_report.json`, `*_unit_pack.xml`, `*_lv0.csv`, `*_disaggregation.xml`, `*.xlsx` — в **`.gitignore`**. Раздельные TXT именуются штрихкодом коробки (маска в gitignore не задана). Также не коммитятся `build/`, `dist/`, виртуальное окружение.
