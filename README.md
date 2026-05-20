@@ -43,6 +43,7 @@ python ConvertorJ2X.py
 
 - `organisation` / `id_info` / `LP_info@LP_TIN` — ИНН из **participantId**;
 - для каждой коробки (уровень 1) — блок `pack_content`: `pack_code` = `Barcode` коробки из JSON (без изменений), дочерние `cis` = коды изделий (01+GTIN+21+серия без криптохвоста).
+- значения `pack_code` и `cis` записываются в XML через `<![CDATA[...]]>`, чтобы спецсимволы в КИ не требовали дополнительного экранирования.
 
 Пример: `задание_unit_pack.xml` рядом с исходным JSON.
 
@@ -52,6 +53,7 @@ python ConvertorJ2X.py
 
 - `trade_participant_inn` — ИНН из поля «Участник»;
 - `packings_list` / `packing` / `kitu` — коды коробок уровня 1 (КИТУ) как в JSON (`Barcode` без изменений).
+- файл формируется стандартной XML-сериализацией (без принудительного CDATA для `kitu`).
 
 Пример имени файла: `задание_disaggregation.xml` рядом с исходным JSON.
 

@@ -11,9 +11,9 @@ import argparse
 import json
 import re
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
 
 
 def _app_dir() -> Path:
@@ -172,14 +172,24 @@ def validate_report(instance: dict[str, Any], schema_path: Path) -> None:
     jsonschema.validate(instance=instance, schema=schema)
 
 
-def build_unit_pack_xml(data: dict[str, Any], participant_id: str) -> ET.Element:
+def _as_cdata(value: str) -> str:
+    # В XML CDATA не может содержать последовательность "]]>".
+    return f"<![CDATA[{value.replace(']]>', ']]]]><![CDATA[>')}]]>"
+
+
+def build_unit_pack_xml_text(data: dict[str, Any], participant_id: str) -> str:
     """XML агрегации (unit_pack): pack_code — Barcode коробки из JSON без изменений."""
-    root = ET.Element("unit_pack")
-    document = ET.SubElement(root, "Document")
-    organisation = ET.SubElement(document, "organisation")
-    id_info = ET.SubElement(organisation, "id_info")
     inn = str(participant_id).strip()
-    ET.SubElement(id_info, "LP_info", {"LP_TIN": inn})
+    inn_attr = escape(inn, {"\"": "&quot;", "'": "&apos;"})
+    lines = [
+        "<unit_pack>",
+        "    <Document>",
+        "        <organisation>",
+        "            <id_info>",
+        f'                <LP_info LP_TIN="{inn_attr}"/>',
+        "            </id_info>",
+        "        </organisation>",
+    ]
     tasks = data.get("TaskMarks")
     if not isinstance(tasks, list) or not tasks:
         raise ValueError("В JSON отсутствует непустой массив TaskMarks.")
@@ -192,22 +202,25 @@ def build_unit_pack_xml(data: dict[str, Any], participant_id: str) -> ET.Element
             bc = box.get("Barcode", "")
             if not bc:
                 raise ValueError("У коробки уровня 1 отсутствует Barcode.")
-            pack_content = ET.SubElement(document, "pack_content")
-            ET.SubElement(pack_content, "pack_code").text = str(bc)
+            lines.append("        <pack_content>")
+            lines.append(f"            <pack_code>{_as_cdata(str(bc))}</pack_code>")
             for child in box["ChildBarcodes"]:
-                ET.SubElement(pack_content, "cis").text = barcode_to_sntin(str(child["Barcode"]))
+                cis = barcode_to_sntin(str(child["Barcode"]))
+                lines.append(f"            <cis>{_as_cdata(cis)}</cis>")
+            lines.append("        </pack_content>")
     if not found:
         raise ValueError(
             "Не найдено агрегационных единиц уровня 1 с кодами уровня 0 "
             "(ожидается структура ChildBarcodes → коробки → изделия)."
         )
-    return root
+    lines.extend(["    </Document>", "</unit_pack>"])
+    return "\n".join(lines)
 
 
 def unit_pack_xml_bytes(data: dict[str, Any], participant_id: str) -> bytes:
-    root = build_unit_pack_xml(data, participant_id)
-    ET.indent(root, space="    ")
-    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    body = build_unit_pack_xml_text(data, participant_id)
+    xml_text = f'<?xml version="1.0" encoding="utf-8"?>\n{body}\n'
+    return xml_text.encode("utf-8")
 
 
 def export_paths(json_path: Path) -> tuple[Path, Path, Path]:
