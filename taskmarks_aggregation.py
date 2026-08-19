@@ -61,6 +61,73 @@ def _is_level0_leaf(d: Any) -> bool:
     return isinstance(d, dict) and d.get("level") == 0 and "Barcode" in d
 
 
+def _is_level1_box(d: Any) -> bool:
+    ch = d.get("ChildBarcodes")
+    return (
+        isinstance(d, dict)
+        and d.get("level") == 1
+        and isinstance(ch, list)
+        and ch
+        and all(_is_level0_leaf(c) for c in ch)
+    )
+
+
+def _is_level_n_aggregate(d: Any, level: int) -> bool:
+    """Узел уровня `level`, у которого прямые дочерние элементы — агрегаты уровня level-1."""
+    if not isinstance(d, dict) or d.get("level") != level:
+        return False
+    ch = d.get("ChildBarcodes")
+    if not isinstance(ch, list) or not ch:
+        return False
+    child_level = level - 1
+    if child_level == 0:
+        return all(_is_level0_leaf(c) for c in ch)
+    return all(_is_level_n_aggregate(c, child_level) for c in ch)
+
+
+def _find_max_level(obj: Any) -> int:
+    max_lv = 0
+    if isinstance(obj, dict):
+        if "level" in obj:
+            max_lv = max(max_lv, int(obj["level"]))
+        for v in obj.values():
+            max_lv = max(max_lv, _find_max_level(v))
+    elif isinstance(obj, list):
+        for item in obj:
+            max_lv = max(max_lv, _find_max_level(item))
+    return max_lv
+
+
+def find_max_level_in_data(data: dict) -> int:
+    max_lv = 0
+    for tm in data.get("TaskMarks") or []:
+        if isinstance(tm, dict):
+            max_lv = max(max_lv, _find_max_level(tm))
+    return max_lv
+
+
+def iter_aggregate_nodes(task_root: dict, aggregate_level: int):
+    """Узлы агрегации на заданном уровне (дочерние элементы — уровень на 1 ниже)."""
+
+    def walk(obj: Any):
+        if isinstance(obj, dict):
+            if _is_level_n_aggregate(obj, aggregate_level):
+                yield obj
+            for v in obj.values():
+                yield from walk(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                yield from walk(item)
+
+    yield from walk(task_root)
+
+
+def _code_for_aggregation_report(barcode: str, child_level: int) -> str:
+    if child_level == 0:
+        return barcode_to_sntin(barcode)
+    return normalize_unit_serial_number(barcode)
+
+
 def normalize_unit_serial_number(value: Any) -> str:
     """Для unitSerialNumber удаляем ровно два лидирующих нуля (если есть)."""
     s = str(value)
@@ -72,13 +139,7 @@ def iter_level1_boxes(task_root: dict):
 
     def walk(obj: Any):
         if isinstance(obj, dict):
-            ch = obj.get("ChildBarcodes")
-            if (
-                obj.get("level") == 1
-                and isinstance(ch, list)
-                and ch
-                and all(_is_level0_leaf(c) for c in ch)
-            ):
+            if _is_level1_box(obj):
                 yield obj
             for v in obj.values():
                 yield from walk(v)
@@ -87,6 +148,31 @@ def iter_level1_boxes(task_root: dict):
                 yield from walk(item)
 
     yield from walk(task_root)
+
+
+def upper_levels_to_aggregation_units(task_mark: dict) -> list[dict[str, Any]]:
+    """Агрегаты выше уровня 0: sntins — коды дочернего уровня, без level 0."""
+    max_lv = _find_max_level(task_mark)
+    if max_lv <= 1:
+        return []
+    units: list[dict[str, Any]] = []
+    child_level = max_lv - 1
+    for node in iter_aggregate_nodes(task_mark, max_lv):
+        sntins = [
+            _code_for_aggregation_report(str(c["Barcode"]), child_level)
+            for c in node["ChildBarcodes"]
+        ]
+        n = len(sntins)
+        units.append(
+            {
+                "sntins": sntins,
+                "unitSerialNumber": normalize_unit_serial_number(node.get("Barcode", "")),
+                "aggregationUnitCapacity": n,
+                "aggregationType": "AGGREGATION",
+                "aggregatedItemsCount": n,
+            }
+        )
+    return units
 
 
 def boxes_to_aggregation_units(task_mark: dict) -> list[dict[str, Any]]:
@@ -157,6 +243,38 @@ def build_aggregation_report(
         raise ValueError(
             "Не найдено агрегационных единиц уровня 1 с кодами уровня 0 "
             "(ожидается структура ChildBarcodes → коробки → изделия)."
+        )
+    return {
+        "productGroup": resolve_product_group(product_group),
+        "aggregationUnits": all_units,
+        "participantId": resolve_participant_id(participant_id),
+    }
+
+
+def build_upper_level_aggregation_report(
+    data: dict,
+    product_group: str | None = None,
+    participant_id: str | None = None,
+) -> dict[str, Any]:
+    """Отчёт агрегации только для уровней выше 0 (без кодов изделий в sntins)."""
+    tasks = data.get("TaskMarks")
+    if not isinstance(tasks, list) or not tasks:
+        raise ValueError("В JSON отсутствует непустой массив TaskMarks.")
+    max_lv = find_max_level_in_data(data)
+    if max_lv <= 1:
+        raise ValueError(
+            "В JSON нет агрегации выше уровня 0 "
+            "(ожидается структура с уровнем 2 и выше, например паллета → коробки)."
+        )
+    all_units: list[dict[str, Any]] = []
+    for tm in tasks:
+        if not isinstance(tm, dict):
+            continue
+        all_units.extend(upper_levels_to_aggregation_units(tm))
+    if not all_units:
+        raise ValueError(
+            "Не найдено агрегационных единиц выше уровня 0 "
+            f"(максимальный level в файле: {max_lv})."
         )
     return {
         "productGroup": resolve_product_group(product_group),
@@ -289,6 +407,44 @@ def export_separate_level0_csv(
     return written
 
 
+def write_aggregation_report(
+    input_path: Path,
+    report: dict[str, Any],
+    *,
+    schema_path: Path | None = None,
+    validate: bool = True,
+) -> Path:
+    sch = schema_path if schema_path is not None else SCHEMA_PATH
+    if validate and sch.is_file():
+        validate_report(report, sch)
+    out_json = export_paths(input_path)[0]
+    out_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return out_json
+
+
+def process_aggregation_json_only(
+    input_path: Path,
+    schema_path: Path | None = None,
+    *,
+    validate: bool = True,
+    product_group: str | None = None,
+    participant_id: str | None = None,
+) -> Path:
+    """Выгрузка станции агрегации → JSON-отчёт (_agg_report.json), без кодов level 0."""
+    data = json.loads(input_path.read_text(encoding="utf-8"))
+    report = build_upper_level_aggregation_report(
+        data,
+        product_group=product_group,
+        participant_id=participant_id,
+    )
+    return write_aggregation_report(
+        input_path,
+        report,
+        schema_path=schema_path,
+        validate=validate,
+    )
+
+
 def process_file(
     input_path: Path,
     schema_path: Path | None = None,
@@ -303,11 +459,13 @@ def process_file(
         product_group=product_group,
         participant_id=participant_id,
     )
-    sch = schema_path if schema_path is not None else SCHEMA_PATH
-    if validate and sch.is_file():
-        validate_report(report, sch)
-    out_json, out_csv, out_xml = export_paths(input_path)
-    out_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_json = write_aggregation_report(
+        input_path,
+        report,
+        schema_path=schema_path,
+        validate=validate,
+    )
+    _, out_csv, out_xml = export_paths(input_path)
     out_xml.write_bytes(unit_pack_xml_bytes(data, report["participantId"]))
     lines = collect_level0_barcodes_ordered(data)
     with out_csv.open("w", encoding="utf-8", newline="") as f:

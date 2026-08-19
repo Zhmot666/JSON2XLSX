@@ -108,6 +108,7 @@ QPushButton#ConvertFile:pressed {
     background: #1e40af;
 }
 QPushButton#ExportAggregation,
+QPushButton#ExportAggregationJson,
 QPushButton#ExportDisaggregation {
     background: #ffffff;
     color: #1d4ed8;
@@ -118,11 +119,13 @@ QPushButton#ExportDisaggregation {
     font-size: 13px;
 }
 QPushButton#ExportAggregation:hover,
+QPushButton#ExportAggregationJson:hover,
 QPushButton#ExportDisaggregation:hover {
     background: #eff6ff;
     border-color: #3b82f6;
 }
 QPushButton#ExportAggregation:pressed,
+QPushButton#ExportAggregationJson:pressed,
 QPushButton#ExportDisaggregation:pressed {
     background: #dbeafe;
 }
@@ -165,6 +168,7 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.productGroupInput.setPlaceholderText(default_pg)
         self.SelectFile.clicked.connect(self.press_select)
         self.ConvertFile.clicked.connect(self.convert_file)
+        self.ExportAggregationJson.clicked.connect(self.export_aggregation_json)
         self.ExportAggregation.clicked.connect(self.export_aggregation_report)
         self.ExportDisaggregation.clicked.connect(self.export_disaggregation_xml)
         self.ExportSeparateCsv.clicked.connect(self.export_separate_csv)
@@ -298,6 +302,37 @@ class MainApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self,
             'Готово',
             f'Создан файл:\n{out_xml}',
+        )
+
+    def export_aggregation_json(self):
+        file_path = self.SelectedFile.text()
+        if not file_path or file_path == 'Файл не выбран':
+            QMessageBox.warning(self, 'Нет файла', 'Сначала выберите JSON-файл.')
+            return
+        pid = self.participantIdInput.text().strip()
+        if not pid:
+            QMessageBox.warning(
+                self,
+                'Нет participantId',
+                'Заполните поле «Участник (participantId)» для выгрузки агрегации.',
+            )
+            return
+        try:
+            pg = self.productGroupInput.text().strip() or None
+            out_json = taskmarks_aggregation.process_aggregation_json_only(
+                Path(file_path),
+                taskmarks_aggregation.SCHEMA_PATH,
+                validate=True,
+                product_group=pg,
+                participant_id=pid,
+            )
+        except Exception as exc:
+            QMessageBox.critical(self, 'Ошибка экспорта', str(exc))
+            return
+        QMessageBox.information(
+            self,
+            'Готово',
+            f'Создан файл:\n{out_json}',
         )
 
     def export_aggregation_report(self):

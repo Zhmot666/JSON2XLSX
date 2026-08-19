@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'e:\ProjectPy\JSON2XLSX\design.ui'
+# Form implementation generated from reading ui file 'design.ui'
 #
 # Created by: PyQt6 UI code generator 6.11.0
 #
@@ -12,8 +12,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(820, 520)
-        MainWindow.setMinimumSize(QtCore.QSize(740, 460))
+        MainWindow.resize(920, 520)
+        MainWindow.setMinimumSize(QtCore.QSize(840, 460))
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_central = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -151,6 +151,10 @@ class Ui_MainWindow(object):
         self.ExportDisaggregation.setMinimumSize(QtCore.QSize(0, 42))
         self.ExportDisaggregation.setObjectName("ExportDisaggregation")
         self.horizontalLayout_actions.addWidget(self.ExportDisaggregation)
+        self.ExportAggregationJson = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.ExportAggregationJson.setMinimumSize(QtCore.QSize(0, 42))
+        self.ExportAggregationJson.setObjectName("ExportAggregationJson")
+        self.horizontalLayout_actions.addWidget(self.ExportAggregationJson)
         self.ExportAggregation = QtWidgets.QPushButton(parent=self.centralwidget)
         self.ExportAggregation.setMinimumSize(QtCore.QSize(0, 42))
         self.ExportAggregation.setObjectName("ExportAggregation")
@@ -190,5 +194,6 @@ class Ui_MainWindow(object):
         self.max_items_lv0.setPlaceholderText(_translate("MainWindow", "Пусто = без лимита"))
         self.ExportSeparateCsv.setText(_translate("MainWindow", "Раздельные TXT"))
         self.ExportDisaggregation.setText(_translate("MainWindow", "Разагрегация"))
+        self.ExportAggregationJson.setText(_translate("MainWindow", "Выгрузка агрегации"))
         self.ExportAggregation.setText(_translate("MainWindow", "Отчёт агрегации + CSV (ур. 0)"))
         self.ConvertFile.setText(_translate("MainWindow", "Конвертировать в XLSX"))

@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>820</width>
+    <width>920</width>
     <height>520</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>740</width>
+    <width>840</width>
     <height>460</height>
    </size>
   </property>
@@ -332,6 +332,19 @@
         </property>
         <property name="text">
          <string>Разагрегация</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="ExportAggregationJson">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>42</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Выгрузка агрегации</string>
         </property>
        </widget>
       </item>
